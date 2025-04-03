@@ -1,0 +1,658 @@
+openapi: 3.0.0
+info:
+  title: Vici API
+  version: 1.0.0
+  description: |
+    Vici API provides endpoints for managing workouts, training programs, and user data.
+    
+    ## API Versioning
+    The API supports multiple versions simultaneously. You can specify the version in the URL path:
+    ```
+    /v1/users
+    /v2/users
+    ```
+    
+    If no version is specified, the default version (v1) will be used.
+    
+    ## Version Status
+    - v1: Current stable version (deprecated as of December 31, 2025)
+    - v2: Latest version with new features and improvements
+    
+    For migration guides between versions, see `/api/version-docs/migrations`.
+    
+    ## Authentication
+    All API endpoints require authentication using JWT tokens. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your_token>
+    ```
+    
+    ## Rate Limiting
+    API requests are rate limited based on your subscription tier:
+    - Free: 100 requests per hour
+    - Pro: 1000 requests per hour
+    - Enterprise: Custom limits
+    
+    ## Error Handling
+    All errors follow a standard format:
+    ```json
+    {
+      "error": {
+        "code": "ERROR_CODE",
+        "message": "Human readable message",
+        "details": {}
+      }
+    }
+    ```
+
+servers:
+  - url: https://api.vici.com/v1
+    description: Production server (v1)
+  - url: https://api.vici.com/v2
+    description: Production server (v2)
+  - url: https://staging-api.vici.com/v1
+    description: Staging server (v1)
+  - url: https://staging-api.vici.com/v2
+    description: Staging server (v2)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code for programmatic handling
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              description: Additional error details
+              additionalProperties: true
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Number of items per page
+        total:
+          type: integer
+          description: Total number of items
+        pages:
+          type: integer
+          description: Total number of pages
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        # v1 only
+        settings:
+          type: object
+          properties:
+            notifications:
+              type: boolean
+            theme:
+              type: string
+              enum: [light, dark]
+        # v2 only
+        preferences:
+          type: object
+          properties:
+            notifications:
+              type: object
+              properties:
+                email:
+                  type: boolean
+                push:
+                  type: boolean
+                sms:
+                  type: boolean
+            theme:
+              type: string
+              enum: [light, dark]
+            language:
+              type: string
+              default: en
+            timezone:
+              type: string
+              default: UTC
+
+    Workout:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [strength, cardio, flexibility, hiit]
+        duration:
+          type: integer
+          description: Duration in minutes
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        exercises:
+          type: array
+          items:
+            $ref: '#/components/schemas/Exercise'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Exercise:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        sets:
+          type: integer
+        reps:
+          type: integer
+        weight:
+          type: number
+        duration:
+          type: integer
+          description: Duration in seconds
+        restTime:
+          type: integer
+          description: Rest time in seconds
+        notes:
+          type: string
+        # v2 only
+        metadata:
+          type: object
+          properties:
+            muscleGroups:
+              type: array
+              items:
+                type: string
+            equipment:
+              type: array
+              items:
+                type: string
+            difficulty:
+              type: string
+              enum: [beginner, intermediate, advanced]
+
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user
+      description: Login with email and password to receive JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                # v2 only
+                client_id:
+                  type: string
+                  description: Client ID for API v2
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      summary: Refresh authentication token
+      description: Get a new JWT token using refresh token
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me:
+    get:
+      summary: Get current user profile
+      description: Retrieve the authenticated user's profile
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /workouts:
+    get:
+      summary: List workouts
+      description: Retrieve a paginated list of workouts
+      tags:
+        - Workouts
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [strength, cardio, flexibility, hiit]
+          description: Filter by workout type
+      responses:
+        '200':
+          description: Workouts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Workout'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create workout
+      description: Create a new workout
+      tags:
+        - Workouts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - type
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                type:
+                  type: string
+                  enum: [strength, cardio, flexibility, hiit]
+                duration:
+                  type: integer
+                difficulty:
+                  type: string
+                  enum: [beginner, intermediate, advanced]
+                exercises:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Exercise'
+      responses:
+        '201':
+          description: Workout created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workout'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /workouts/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Workout ID
+    get:
+      summary: Get workout
+      description: Retrieve a specific workout by ID
+      tags:
+        - Workouts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Workout retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workout'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Workout not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update workout
+      description: Update a specific workout
+      tags:
+        - Workouts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workout'
+      responses:
+        '200':
+          description: Workout updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workout'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Workout not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete workout
+      description: Delete a specific workout
+      tags:
+        - Workouts
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Workout deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Workout not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  # v2 only
+  /webhooks:
+    post:
+      summary: Create webhook subscription
+      description: Subscribe to webhook events
+      tags:
+        - Webhooks
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+                - events
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: Webhook URL to receive events
+                events:
+                  type: array
+                  items:
+                    type: string
+                    enum: [workout.completed, achievement.unlocked, program.progress]
+                  description: Events to subscribe to
+                secret:
+                  type: string
+                  description: Secret for webhook signature verification
+      responses:
+        '201':
+          description: Webhook subscription created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  url:
+                    type: string
+                    format: uri
+                  events:
+                    type: array
+                    items:
+                      type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+  /webhooks/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Webhook subscription ID
+    get:
+      summary: Get webhook subscription
+      description: Retrieve a specific webhook subscription
+      tags:
+        - Webhooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Webhook subscription retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  url:
+                    type: string
+                    format: uri
+                  events:
+                    type: array
+                    items:
+                      type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Webhook subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+    delete:
+      summary: Delete webhook subscription
+      description: Delete a specific webhook subscription
+      tags:
+        - Webhooks
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Webhook subscription deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Webhook subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
