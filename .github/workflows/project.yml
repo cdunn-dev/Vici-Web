@@ -6,6 +6,11 @@ on:
   pull_request:
     types: [opened, edited, closed, reopened, labeled, unlabeled, review_requested, review_request_removed]
 
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
 jobs:
   update-project:
     runs-on: ubuntu-latest
