@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "project:move": "node .github/scripts/project-manager.js $1 $2"
+    "project:move": "node .github/scripts/project-manager.js \"$@\""
   },
   "dependencies": {
     "@octokit/rest": "^19.0.7",

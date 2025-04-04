@@ -10,6 +10,7 @@ permissions:
   issues: write
   pull-requests: write
   contents: read
+  projects: write
 
 jobs:
   update-project:
@@ -22,12 +23,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+
+      - name: Create package-lock.json
+        run: npm install --package-lock-only
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Debug Info
+        run: |
+          echo "Issue/PR Number: ${{ github.event.issue.number || github.event.pull_request.number }}"
+          echo "Event Action: ${{ github.event.action }}"
+          echo "Project ID: ${{ secrets.PROJECT_ID }}"
 
       - name: Run project manager
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
-        run: npm run project:move -- ${{ github.event.issue.number || github.event.pull_request.number }} ${{ github.event.action }} 
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.repository }}
+        run: node .github/scripts/project-manager.js "${{ github.event.issue.number || github.event.pull_request.number }}" "${{ github.event.action }}" 
