@@ -13,31 +13,31 @@ describe('ErrorHandlingService', () => {
   let mockClient: jest.Mocked<PoolClient>;
 
   const mockConfig: ErrorHandlingConfig = {
-    enabled: true,
-    logToDatabase: true,
-    logToFile: true,
-    logFilePath: '/tmp/error.log',
-    maxLogFileSize: 1024 * 1024,
-    maxLogFiles: 5,
-    enableErrorTracking: true,
+  enabled: true,
+  logToDatabase: true,
+  logToFile: true,
+  logFilePath: '/tmp/error.log',
+  maxLogFileSize: 1024 * 1024,
+  maxLogFiles: 5,
+  enableErrorTracking: true,
     errorTrackingSampleRate: 1,
-    enableErrorReporting: true,
+  enableErrorReporting: true,
     errorReportingEndpoint: 'http://localhost:3000/errors',
-    errorReportingApiKey: 'test-key',
-    enableErrorRecovery: true,
-    maxRecoveryAttempts: 3,
-    recoveryAttemptDelay: 1000,
-    enableErrorNotification: true,
-    errorNotificationChannels: ['email', 'slack'],
-    errorNotificationRecipients: ['admin@example.com'],
-    enableErrorAggregation: true,
-    errorAggregationWindow: 60000,
+  errorReportingApiKey: 'test-key',
+  enableErrorRecovery: true,
+  maxRecoveryAttempts: 3,
+  recoveryAttemptDelay: 1000,
+  enableErrorNotification: true,
+  errorNotificationChannels: ['email', 'slack'],
+  errorNotificationRecipients: ['admin@example.com'],
+  enableErrorAggregation: true,
+  errorAggregationWindow: 60000,
     errorAggregationThreshold: 10,
-    errorRateLimiting: {
+  errorRateLimiting: {
       enabled: true,
-      windowMs: 60000,
-      maxErrorsPerWindow: 100,
-      categoryLimits: {
+    windowMs: 60000,
+    maxErrorsPerWindow: 100,
+    categoryLimits: {
         [ErrorCategory.DATABASE]: 50,
         [ErrorCategory.NETWORK]: 30,
         [ErrorCategory.VALIDATION]: 20,
@@ -45,21 +45,21 @@ describe('ErrorHandlingService', () => {
         [ErrorCategory.AUTHORIZATION]: 10,
         [ErrorCategory.INTEGRATION]: 20,
         [ErrorCategory.PERFORMANCE]: 30,
-        [ErrorCategory.SECURITY]: 5,
+      [ErrorCategory.SECURITY]: 5,
         [ErrorCategory.SYSTEM]: 20,
         [ErrorCategory.BUSINESS]: 15
-      }
-    },
-    errorSampling: {
+    }
+  },
+  errorSampling: {
       enabled: true,
       sampleRate: 1,
-      severityRates: {
+    severityRates: {
         [ErrorSeverity.LOW]: 0.5,
         [ErrorSeverity.MEDIUM]: 0.8,
         [ErrorSeverity.HIGH]: 1,
         [ErrorSeverity.CRITICAL]: 1
-      },
-      categoryRates: {
+    },
+    categoryRates: {
         [ErrorCategory.DATABASE]: 1,
         [ErrorCategory.NETWORK]: 1,
         [ErrorCategory.VALIDATION]: 0.5,
@@ -70,19 +70,19 @@ describe('ErrorHandlingService', () => {
         [ErrorCategory.SECURITY]: 1,
         [ErrorCategory.SYSTEM]: 1,
         [ErrorCategory.BUSINESS]: 0.5
-      }
-    },
-    errorContextEnrichment: {
+    }
+  },
+  errorContextEnrichment: {
       enabled: true,
       includeSystemMetrics: true,
       includeRequestData: true,
       includeResponseData: true,
-      customEnrichers: []
-    },
-    errorCorrelation: {
+    customEnrichers: []
+  },
+  errorCorrelation: {
       enabled: true,
       correlationWindowMs: 300000,
-      maxCorrelationDistance: 5,
+    maxCorrelationDistance: 5,
       correlationKeys: ['requestId', 'userId', 'correlationId']
     },
     recoveryStrategies: {
@@ -633,7 +633,7 @@ describe('ErrorHandlingService', () => {
       // Create a test error
       const error = new Error('Test error');
       const context = {
-        severity: ErrorSeverity.HIGH,
+          severity: ErrorSeverity.HIGH,
         category: ErrorCategory.SYSTEM,
         source: 'test',
         userId: 'user123',
@@ -662,7 +662,7 @@ describe('ErrorHandlingService', () => {
       expect(reportBody).toMatchObject({
         message: error.message,
         code: error.name,
-        severity: ErrorSeverity.HIGH,
+          severity: ErrorSeverity.HIGH,
         category: ErrorCategory.SYSTEM,
         source: 'test',
         context: expect.objectContaining({
@@ -747,7 +747,7 @@ describe('ErrorHandlingService', () => {
       // Create an error that will be repeated
       const error = new Error('Database connection failed');
       const context = {
-        severity: ErrorSeverity.HIGH,
+          severity: ErrorSeverity.HIGH,
         category: ErrorCategory.DATABASE
       };
 
@@ -841,4 +841,4 @@ describe('ErrorHandlingService', () => {
       });
     });
   });
-});
+}); 
