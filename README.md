@@ -1,138 +1,135 @@
-# Vici API
+# Vici
 
-A secure and scalable fitness API built with Node.js, Express, and TypeScript.
+Vici is a modern web application designed to provide personalized training plans and fitness tracking capabilities. This repository contains the frontend implementation of the Vici application.
 
 ## Features
 
-- **API Versioning**: Support for multiple API versions with deprecation warnings and sunset notifications
-- **Authentication**: OAuth 2.0 with refresh tokens and API key management
-- **Security**: Comprehensive security measures including request signing, IP whitelisting, and security headers
-- **Rate Limiting**: Configurable rate limiting based on subscription tiers
-- **Documentation**: OpenAPI specification and version-specific documentation
+- **Personalized Training Plans**: AI-powered workout recommendations based on user goals and preferences
+- **Progress Tracking**: Comprehensive metrics and analytics for tracking fitness progress
+- **User Management**: Secure authentication and profile management
+- **Responsive Design**: Mobile-first approach with adaptive layouts
+- **Real-time Updates**: Live tracking and instant feedback
+
+## Tech Stack
+
+- **Frontend**: React, TypeScript, Next.js
+- **Styling**: Tailwind CSS
+- **State Management**: Redux Toolkit
+- **Testing**: Jest, React Testing Library
+- **CI/CD**: GitHub Actions
+- **Documentation**: Markdown, TypeDoc
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
-- Redis >= 6.0.0
+- Node.js (v18 or higher)
+- npm or yarn
+- Git
 
 ### Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/vici-api.git
-   cd vici-api
+   git clone https://github.com/cdunn-dev/Vici.git
+   cd Vici
    ```
 
 2. Install dependencies:
    ```bash
    npm install
+   # or
+   yarn install
    ```
 
-3. Create a `.env` file in the root directory with the following variables:
-   ```
-   PORT=3000
-   NODE_ENV=development
-   OAUTH_TOKEN_SECRET=your-oauth-token-secret
-   REQUEST_SIGNING_SECRET=your-request-signing-secret
-   REDIS_URL=redis://localhost:6379
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your configuration
    ```
 
 4. Start the development server:
    ```bash
    npm run dev
+   # or
+   yarn dev
    ```
 
-## API Security
+The application will be available at `http://localhost:3000`.
 
-### OAuth 2.0 Authentication
+## Project Structure
 
-The API uses OAuth 2.0 for user authentication with the following features:
-
-- Access tokens with configurable expiration
-- Refresh tokens for long-term access
-- Scope-based authorization
-- Token revocation
-
-Example:
-```typescript
-// Apply OAuth authentication middleware
-router.use('/users', oauthAuth, userRoutes);
-
-// Check for required scopes
-router.use('/admin', oauthAuth, requireScopes(['admin']), adminRoutes);
+```
+Vici/
+├── src/                    # Source code
+│   ├── components/         # Reusable UI components
+│   ├── pages/             # Next.js pages
+│   ├── services/          # API and service integrations
+│   ├── store/             # Redux store configuration
+│   ├── styles/            # Global styles and Tailwind config
+│   └── utils/             # Utility functions and helpers
+├── public/                # Static assets
+├── tests/                 # Test files
+└── docs/                  # Documentation
 ```
 
-### API Key Management
+## Development Workflow
 
-API keys are available for third-party integrations with the following features:
+1. Create a new branch for your feature:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
 
-- Secure key generation
-- Rate limiting based on subscription tiers
-- Key expiration
-- Scope-based access control
+2. Make your changes and commit them:
+   ```bash
+   git add .
+   git commit -m "Description of your changes"
+   ```
 
-Example:
-```typescript
-// Apply API key authentication middleware
-router.use('/llm', apiKeyAuth, requireScopes(['llm:access']), llmRoutes);
+3. Push your branch and create a pull request:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+## Testing
+
+Run the test suite:
+```bash
+npm test
+# or
+yarn test
 ```
 
-### Request Signing
+## Documentation
 
-Sensitive operations require request signing to prevent tampering:
+- [Technical Requirements](docs/TECHNICAL_REQUIREMENTS.md)
+- [Testing Plan](docs/TESTING_PLAN.md)
+- [Development Timeline](docs/DEVELOPMENT_TIMELINE.md)
+- [Changelog](CHANGELOG.md)
 
-- HMAC-based signatures
-- Timestamp validation to prevent replay attacks
-- Nonce generation to ensure uniqueness
+## Contributing
 
-Example:
-```typescript
-// Apply request signing middleware for sensitive operations
-router.post('/sensitive-operation', requestSigning(process.env.REQUEST_SIGNING_SECRET), sensitiveOperationHandler);
-```
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-### IP Whitelisting
-
-Admin endpoints are protected by IP whitelisting:
-
-- Support for individual IP addresses
-- CIDR notation for IP ranges
-- Redis-based storage for distributed environments
-
-Example:
-```typescript
-// Apply IP whitelisting middleware for admin endpoints
-router.use('/admin', ipWhitelist, adminRoutes);
-```
-
-### Security Headers
-
-The API applies comprehensive security headers to all responses:
-
-- Content Security Policy
-- X-Content-Type-Options
-- X-Frame-Options
-- X-XSS-Protection
-- Referrer-Policy
-- Permissions-Policy
-
-### CORS Configuration
-
-Cross-Origin Resource Sharing is configured with:
-
-- Allowed origins
-- Allowed methods
-- Allowed headers
-- Exposed headers
-- Credentials support
-- Preflight caching
-
-## API Documentation
-
-API documentation is available at `/api/docs` and follows the OpenAPI specification.
+Please ensure your PR:
+- Includes tests for new features
+- Updates documentation as needed
+- Follows the existing code style
+- Includes a clear description of changes
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support, please open an issue in the GitHub repository or contact the maintainers.
+
+## Acknowledgments
+
+- Thanks to all contributors who have helped shape this project
+- Special thanks to the open-source community for their tools and libraries 
