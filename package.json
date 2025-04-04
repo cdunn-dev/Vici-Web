@@ -11,18 +11,18 @@
     "project:move": "node .github/scripts/project-manager.js \"$@\""
   },
   "dependencies": {
-    "@octokit/rest": "^19.0.7",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest"
   },
   "devDependencies": {
+    "@octokit/rest": "^21.1.1",
+    "@testing-library/jest-dom": "latest",
+    "@testing-library/react": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "typescript": "latest",
     "jest": "latest",
-    "@testing-library/react": "latest",
-    "@testing-library/jest-dom": "latest"
+    "typescript": "latest"
   }
 }

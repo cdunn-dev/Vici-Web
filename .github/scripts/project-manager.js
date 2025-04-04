@@ -5,7 +5,7 @@ const octokit = new Octokit({
 });
 
 async function moveToColumn(issueNumber, action) {
-  console.log(`Moving issue/PR #${issueNumber} based on action: ${action}`);
+  console.log(`Starting moveToColumn with issueNumber: ${issueNumber}, action: ${action}`);
   
   try {
     const projectId = process.env.PROJECT_ID;
@@ -13,49 +13,59 @@ async function moveToColumn(issueNumber, action) {
       throw new Error('PROJECT_ID environment variable is not set');
     }
 
-    console.log(`Getting project with ID: ${projectId}`);
-    
+    console.log(`Using Project ID: ${projectId}`);
+
     // Get project columns
+    console.log('Fetching project columns...');
     const { data: columns } = await octokit.projects.listColumns({
       project_id: parseInt(projectId, 10)
     });
 
-    console.log('Available columns:', columns.map(c => c.name));
+    if (!columns || columns.length === 0) {
+      throw new Error('No columns found in the project');
+    }
+
+    console.log('Available columns:', columns.map(c => ({ id: c.id, name: c.name })));
 
     // Determine target column based on action
     let targetColumn;
-    switch (action) {
-      case 'opened':
-        targetColumn = columns.find(col => col.name.toLowerCase() === 'to do');
-        break;
-      case 'review_requested':
-        targetColumn = columns.find(col => col.name.toLowerCase() === 'review');
-        break;
-      case 'closed':
-      case 'merged':
-        targetColumn = columns.find(col => col.name.toLowerCase() === 'done');
-        break;
-      default:
-        targetColumn = columns.find(col => col.name.toLowerCase() === 'in progress');
-    }
+    const columnMap = {
+      opened: 'to do',
+      review_requested: 'review',
+      closed: 'done',
+      merged: 'done'
+    };
+
+    const targetColumnName = columnMap[action.toLowerCase()] || 'in progress';
+    targetColumn = columns.find(col => col.name.toLowerCase() === targetColumnName);
 
     if (!targetColumn) {
-      throw new Error(`No matching column found for action: ${action}`);
+      console.log(`Column "${targetColumnName}" not found, falling back to first column`);
+      targetColumn = columns[0];
     }
 
-    console.log(`Creating card in column: ${targetColumn.name}`);
+    console.log(`Selected target column: ${targetColumn.name} (${targetColumn.id})`);
 
     // Create card in column
-    await octokit.projects.createCard({
+    console.log('Creating project card...');
+    const card = await octokit.projects.createCard({
       column_id: targetColumn.id,
       content_id: parseInt(issueNumber, 10),
       content_type: 'Issue'
     });
 
-    console.log('Card created successfully');
+    console.log('Card created successfully:', card.data.url);
+    return true;
   } catch (error) {
-    console.error('Error in moveToColumn:', error);
-    process.exit(1);
+    console.error('Error in moveToColumn:', error.message);
+    if (error.response) {
+      console.error('API Response:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+    throw error;
   }
 }
 
@@ -63,14 +73,22 @@ async function moveToColumn(issueNumber, action) {
 const issueNumber = process.argv[2];
 const action = process.argv[3];
 
-console.log('Starting project manager with args:', { issueNumber, action });
-
 if (!issueNumber || !action) {
-  console.error('Missing required arguments: issueNumber and action');
+  console.error('Missing required arguments. Usage: node project-manager.js <issueNumber> <action>');
   process.exit(1);
 }
 
-moveToColumn(issueNumber, action);
+console.log('Starting project manager with args:', { issueNumber, action });
+
+moveToColumn(issueNumber, action)
+  .then(() => {
+    console.log('Successfully processed project card');
+    process.exit(0);
+  })
+  .catch(error => {
+    console.error('Failed to process project card:', error.message);
+    process.exit(1);
+  });
 
 // Export functions for use in workflows
 module.exports = {

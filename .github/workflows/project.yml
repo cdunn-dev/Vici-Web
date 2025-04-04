@@ -25,16 +25,17 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Create package-lock.json
-        run: npm install --package-lock-only
-
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm install
+          npm install --save-dev @octokit/rest
 
       - name: Debug Info
         run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Action: ${{ github.event.action }}"
           echo "Issue/PR Number: ${{ github.event.issue.number || github.event.pull_request.number }}"
-          echo "Event Action: ${{ github.event.action }}"
+          echo "Repository: ${{ github.repository }}"
           echo "Project ID: ${{ secrets.PROJECT_ID }}"
 
       - name: Run project manager
@@ -43,4 +44,10 @@ jobs:
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
           REPO_OWNER: ${{ github.repository_owner }}
           REPO_NAME: ${{ github.repository }}
-        run: node .github/scripts/project-manager.js "${{ github.event.issue.number || github.event.pull_request.number }}" "${{ github.event.action }}" 
+        run: |
+          if [ "${{ github.event.issue.number }}" != "" ] || [ "${{ github.event.pull_request.number }}" != "" ]; then
+            node .github/scripts/project-manager.js "${{ github.event.issue.number || github.event.pull_request.number }}" "${{ github.event.action }}"
+          else
+            echo "No issue or pull request number found"
+            exit 1
+          fi 
