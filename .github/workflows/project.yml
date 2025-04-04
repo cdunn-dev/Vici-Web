@@ -10,18 +10,19 @@ jobs:
   update-project:
     runs-on: ubuntu-latest
     steps:
-      - name: Add to Project Board
-        uses: actions/add-to-project@v0.4.1
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          project-url: ${{ secrets.PROJECT_URL }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          labeled-columns: |
-            bug: "To Do"
-            enhancement: "To Do"
-            documentation: "To Do"
-          issue-column: "To Do"
-          pr-column: "In Progress"
-          pr-review-column: "Review"
-          pr-merged-column: "Done"
-          pr-closed-column: "Done"
-          issue-closed-column: "Done" 
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run project manager
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
+        run: npm run project:move -- ${{ github.event.issue.number || github.event.pull_request.number }} ${{ github.event.action }} 
